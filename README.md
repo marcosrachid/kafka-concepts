@@ -190,6 +190,29 @@ Kafka behaves like a **distributed event log** that can be read multiple times; 
 - If producers write faster than consumers read, lag grows (monitor `consumer lag`)
 - **Mitigation:** Scale consumers (add partitions + consumers), optimize processing, use batch processing, or temporarily throttle producers
 
+### Topic Throughput & Scalability
+
+**Throughput (from official benchmarks):**
+
+Kafka does not define fixed QPS limits — throughput depends on hardware, message size, partitions, and configuration. Reference numbers from [Confluent benchmarks](https://developer.confluent.io/learn/kafka-performance) and [LinkedIn](https://engineering.linkedin.com/kafka/benchmarking-apache-kafka-2-million-writes-second-three-cheap-machines):
+
+| Scenario           | Throughput                 | Setup                                                                   |
+| ------------------ | -------------------------- | ----------------------------------------------------------------------- |
+| Peak stable        | **605 MB/s**               | 100 partitions, 1 KB messages, 3 brokers (i3en.2xlarge), 3x replication |
+| Latency test       | **200K msg/s** (~200 MB/s) | 1 KB messages, p99 latency 5 ms                                         |
+| LinkedIn benchmark | **2M writes/s**            | 3 machines, batched writes                                              |
+
+**Factors that affect throughput:** message size, partition count, replication factor, disk I/O, network, `acks`, batching, compression.
+
+**How to scale a topic for higher throughput:**
+
+1. **Add partitions** — More partitions = more parallelism for producers and consumers. Use `kafka-topics.sh --alter` to increase (cannot decrease).
+2. **Add brokers** — Distribute partitions across more brokers; each broker handles a subset.
+3. **Add consumers** — Up to one consumer per partition per group; scale consumer instances horizontally.
+4. **Tune producer** — `batch.size` (e.g., 100K–200K), `linger.ms` (e.g., 10–100 ms), `compression.type` (e.g., lz4), `acks=1` for higher throughput (trade-off: durability).
+5. **Tune consumer** — Increase `fetch.min.bytes`, `max.partition.fetch.bytes`; process in batches.
+6. **Multiple topics** — Split workload across topics if a single topic becomes a bottleneck.
+
 ---
 
 ## Practice Questions & Answers
