@@ -34,11 +34,26 @@ Apache Kafka is a **distributed streaming platform** with three main capabilitie
 
 The message is the element that flows through the architecture. It contains:
 
-| Component  | Description                     |
-| ---------- | ------------------------------- |
-| **Value**  | Byte array (e.g., String, JSON) |
-| **Key**    | Optional, usually a String      |
-| **Header** | Metadata                        |
+| Component  | Purpose                                                                                                                              | Example                                                    |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| **Value**  | The actual payload — the data the producer sends and the consumer processes. Stored as bytes; commonly JSON, Avro, or String.        | `{"userId": "123", "action": "purchase", "amount": 99.99}` |
+| **Key**    | Optional. Used for **partitioning** (same key → same partition) and **ordering**. Also useful for compaction and lookups.            | `"user-123"` or `"order-456"`                              |
+| **Header** | Optional metadata (key-value pairs). Does not affect partitioning. Used for tracing, correlation IDs, schema version, routing hints. | `trace-id: "abc-xyz"`, `schema-version: "2"`               |
+
+**Example message:**
+
+```
+Key:   "user-123"
+Value: {"event": "login", "timestamp": "2025-03-01T10:00:00Z", "ip": "192.168.1.1"}
+Headers:
+  - trace-id: "req-789"
+  - source: "auth-service"
+  - schema-version: "1"
+```
+
+- **Value:** The event payload; consumer uses it for business logic.
+- **Key:** Ensures all events for `user-123` go to the same partition → ordering for that user.
+- **Headers:** Pass-through metadata for observability and routing, without polluting the payload.
 
 ### Topic
 
