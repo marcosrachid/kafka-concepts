@@ -2,7 +2,10 @@
 
 Summary of Apache Kafka core concepts based on [Apache Kafka — Parte 1: Conceitos](https://medium.com/@guilhermelodi/apache-kafka-parte-1-conceitos-74adbdb1327) by Guilherme Lodi.
 
-**Related:** [Event-Driven Architecture (EDA) in Microservices](./event-driven-architecture.md)
+**Related:**
+
+- [Event-Driven Architecture (EDA) in Microservices](./event-driven-architecture.md)
+- [Notification System Design with Kafka](./notification-system-design.md)
 
 ---
 
