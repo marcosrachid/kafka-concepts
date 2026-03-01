@@ -260,6 +260,14 @@ Kafka does not define fixed QPS limits — throughput depends on hardware, messa
 4. **Leave group:** Call `consumer.close()` — triggers rebalance so other consumers take over
 5. **Config:** Use `consumer.close()` which handles leave + commit; avoid `kill -9`, use `SIGTERM` and handle it to run shutdown logic
 
+### Why is Kafka considered fault-tolerant?
+
+1. **Replication:** Each partition has N replicas (`replication.factor`); one is leader, others are followers. If the leader broker fails, a follower is promoted.
+2. **In-Sync Replicas (ISR):** With `acks=all` and `min.insync.replicas=2`, the producer only gets ACK when at least 2 replicas confirm. One broker down = data still safe.
+3. **Distribution:** Partitions are spread across brokers; one broker failure only affects its partitions, not the whole cluster.
+4. **Persistence:** Messages are written to disk, not just memory; data survives broker crashes.
+5. **No single point of failure:** No central broker; cluster continues operating with broker failures; ZooKeeper/KRaft coordinates leader election.
+
 ---
 
 ## References
