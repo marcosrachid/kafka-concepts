@@ -149,12 +149,42 @@ Event streaming extends beyond Request-Response and supports **Publisher-Subscri
 - The rest of the system is built **around** those events
 - Think: behaviors → stimuli → derived actions → implementation
 
-### When to use each
+### When to Choose EDA vs Synchronous Architecture
 
-- **REST/HTTP:** Essential for exposing microservices; good for request-response
-- **EDA:** Better for high volume, real-time, and decoupled flows
-- **Rule:** To be real-time, you often need to be event-driven
-- **No universal answer:** Evaluate each use case; all approaches have trade-offs
+There is no universal rule — the choice depends on the use case. Below is a decision guide.
+
+#### Prefer EDA (Event-Driven) when:
+
+| Scenario                                    | Why EDA fits                                                                                                                                                                     |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Multiple consumers of the same event**    | One event triggers several independent actions (e.g., `OrderCreated` → inventory, notifications, analytics). Synchronous would require the caller to know and call each service. |
+| **Fire-and-forget / background processing** | The caller does not need an immediate response (e.g., send email, update analytics, sync to warehouse). EDA avoids blocking and timeouts.                                        |
+| **High throughput / burst traffic**         | Events can be buffered; consumers process at their own pace. Synchronous calls under load lead to cascading failures and timeouts.                                               |
+| **Loose coupling**                          | Publishers and subscribers are independent. Adding a new consumer does not change the producer. Synchronous creates direct dependencies.                                         |
+| **Resilience to downstream failures**       | If a consumer is down, events wait in the broker. With sync, a failing service can block or fail the entire flow.                                                                |
+| **Audit trail / replay**                    | Event streams keep history; you can replay, debug, or rebuild state. REST calls are not stored by default.                                                                       |
+| **Event sourcing / CQRS**                   | The system is built around an event log. Synchronous request-response does not match this model.                                                                                 |
+| **Cross-domain / cross-team**               | Different teams own different services; events define clear boundaries. Sync often leads to tight coupling and shared contracts.                                                 |
+
+#### Prefer Synchronous (REST/gRPC) when:
+
+| Scenario                        | Why sync fits                                                                                        |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| **Immediate response required** | User or client needs the result now (e.g., "create account and return session", "validate payment"). |
+| **Simple request-response**     | Single call, single response, no fan-out. Sync is simpler and easier to debug.                       |
+| **Strong consistency needed**   | Operation must be atomic or read-after-write consistent. EDA implies eventual consistency.           |
+| **Query / read operations**     | Fetching data (GET) is typically sync: "give me this resource."                                      |
+| **Low complexity**              | Small system, few services. EDA adds broker, retries, idempotency, etc.                              |
+| **Strict SLAs / latency**       | Need predictable, low latency. Async adds variable delay.                                            |
+
+#### Hybrid approach
+
+Many systems use both:
+
+- **Sync at the edge:** REST API for user-facing requests; returns quickly after minimal processing.
+- **Async internally:** Publishes events for everything else (notifications, analytics, other services).
+
+**Rule of thumb:** If the caller must wait for the result to continue, use sync. If the action can be acknowledged and processed later, use EDA.
 
 ---
 
